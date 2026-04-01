@@ -30,88 +30,113 @@ func drawIcon(in rect: CGRect) {
 	backgroundPath.addClip()
 
 	let gradient = NSGradient(colors: [
-		rgba(7, 13, 12),
-		rgba(13, 24, 22),
-		rgba(20, 36, 31)
+		rgba(25, 12, 16),
+		rgba(31, 14, 18),
+		rgba(42, 17, 20)
 	])!
-	gradient.draw(in: backgroundPath, angle: -35)
+	gradient.draw(in: backgroundPath, angle: -45)
 
-	let glowRect = backgroundRect.insetBy(dx: canvas * 0.09, dy: canvas * 0.09)
+	let glowRect = backgroundRect.insetBy(dx: canvas * 0.08, dy: canvas * 0.08)
 	let glowGradient = NSGradient(
 		colorsAndLocations:
-		(rgba(108, 255, 195, 0.18), 0.0),
-		(rgba(108, 255, 195, 0.04), 0.42),
+		(rgba(255, 126, 90, 0.16), 0.0),
+		(rgba(255, 126, 90, 0.04), 0.45),
 		(rgba(0, 0, 0, 0.0), 1.0)
 	)!
 	glowGradient.draw(in: NSBezierPath(ovalIn: glowRect), relativeCenterPosition: NSPoint(x: 0, y: 0))
 
-	let panelRect = backgroundRect.insetBy(dx: canvas * 0.12, dy: canvas * 0.16)
-	let panelPath = NSBezierPath(roundedRect: panelRect, xRadius: canvas * 0.06, yRadius: canvas * 0.06)
-	rgba(16, 27, 25, 0.98).setFill()
-	panelPath.fill()
+	let faceColor = rgba(179, 66, 62, 0.86)
+	let highlightColor = rgba(233, 86, 77, 0.96)
+	let moonColor = rgba(255, 129, 54, 1)
 
-	panelPath.lineWidth = canvas * 0.01
-	rgba(113, 221, 176, 0.35).setStroke()
-	panelPath.stroke()
+	let clockCenter = CGPoint(x: canvas * 0.46, y: canvas * 0.50)
+	let clockRadius = canvas * 0.225
+	let ringRect = CGRect(x: clockCenter.x - clockRadius, y: clockCenter.y - clockRadius, width: clockRadius * 2, height: clockRadius * 2)
+	let ringPath = NSBezierPath(ovalIn: ringRect)
+	ringPath.lineWidth = canvas * 0.028
+	faceColor.setStroke()
+	ringPath.stroke()
 
-	let headerRect = CGRect(x: panelRect.minX, y: panelRect.maxY - canvas * 0.12, width: panelRect.width, height: canvas * 0.09)
-	let headerPath = NSBezierPath(roundedRect: headerRect, xRadius: canvas * 0.04, yRadius: canvas * 0.04)
-	rgba(21, 37, 34, 1).setFill()
-	headerPath.fill()
+	let topButtonRect = CGRect(x: clockCenter.x - canvas * 0.05, y: ringRect.maxY + canvas * 0.02, width: canvas * 0.10, height: canvas * 0.042)
+	let topButtonPath = NSBezierPath(roundedRect: topButtonRect, xRadius: canvas * 0.02, yRadius: canvas * 0.02)
+	faceColor.setFill()
+	topButtonPath.fill()
 
-	let dotY = headerRect.midY
-	let dotRadius = canvas * 0.015
-	for (index, color) in [rgba(255, 95, 86), rgba(255, 189, 46), rgba(39, 201, 63)].enumerated() {
-		color.setFill()
-		let x = headerRect.minX + canvas * 0.05 + CGFloat(index) * canvas * 0.035
-		NSBezierPath(ovalIn: CGRect(x: x, y: dotY - dotRadius, width: dotRadius * 2, height: dotRadius * 2)).fill()
+	let sideButtonRect = CGRect(x: ringRect.minX + canvas * 0.01, y: ringRect.maxY - canvas * 0.015, width: canvas * 0.07, height: canvas * 0.04)
+	let sideButtonPath = NSBezierPath(roundedRect: sideButtonRect, xRadius: canvas * 0.018, yRadius: canvas * 0.018)
+	sideButtonPath.transform(using: AffineTransform(rotationByDegrees: 35))
+	faceColor.setFill()
+	sideButtonPath.fill()
+
+	for tick in 0..<12 {
+		let angle = CGFloat(tick) * (.pi * 2 / 12)
+		let outer = CGPoint(x: clockCenter.x + cos(angle - .pi / 2) * clockRadius * 0.78, y: clockCenter.y + sin(angle - .pi / 2) * clockRadius * 0.78)
+		let inner = CGPoint(x: clockCenter.x + cos(angle - .pi / 2) * clockRadius * 0.62, y: clockCenter.y + sin(angle - .pi / 2) * clockRadius * 0.62)
+		let tickPath = NSBezierPath()
+		tickPath.move(to: inner)
+		tickPath.line(to: outer)
+		tickPath.lineWidth = canvas * 0.015
+		tickPath.lineCapStyle = .round
+		faceColor.setStroke()
+		tickPath.stroke()
 	}
 
-	let promptFont = NSFont.monospacedSystemFont(ofSize: canvas * 0.11, weight: .bold)
-	let commandFont = NSFont.monospacedSystemFont(ofSize: canvas * 0.18, weight: .bold)
-	let metricsFont = NSFont.monospacedSystemFont(ofSize: canvas * 0.075, weight: .medium)
+	let handPath = NSBezierPath()
+	handPath.move(to: clockCenter)
+	handPath.line(to: CGPoint(x: clockCenter.x - canvas * 0.07, y: clockCenter.y + canvas * 0.05))
+	handPath.move(to: clockCenter)
+	handPath.line(to: CGPoint(x: clockCenter.x + canvas * 0.09, y: clockCenter.y + canvas * 0.065))
+	handPath.lineWidth = canvas * 0.022
+	handPath.lineCapStyle = .round
+	handPath.lineJoinStyle = .round
+	highlightColor.setStroke()
+	handPath.stroke()
 
-	let promptAttributes: [NSAttributedString.Key: Any] = [
-		.font: promptFont,
-		.foregroundColor: rgba(108, 255, 195, 1)
-	]
-	let commandAttributes: [NSAttributedString.Key: Any] = [
-		.font: commandFont,
-		.foregroundColor: rgba(244, 255, 249, 1)
-	]
-	let metricsAttributes: [NSAttributedString.Key: Any] = [
-		.font: metricsFont,
-		.foregroundColor: rgba(142, 189, 170, 0.88)
-	]
+	rgba(113, 33, 35).setFill()
+	NSBezierPath(ovalIn: CGRect(x: clockCenter.x - canvas * 0.026, y: clockCenter.y - canvas * 0.026, width: canvas * 0.052, height: canvas * 0.052)).fill()
+	highlightColor.setFill()
+	NSBezierPath(ovalIn: CGRect(x: clockCenter.x - canvas * 0.013, y: clockCenter.y - canvas * 0.013, width: canvas * 0.026, height: canvas * 0.026)).fill()
 
-	NSAttributedString(string: "> ready", attributes: promptAttributes).draw(at: CGPoint(x: panelRect.minX + canvas * 0.08, y: panelRect.minY + canvas * 0.54))
-	NSAttributedString(string: "_", attributes: promptAttributes).draw(at: CGPoint(x: panelRect.minX + canvas * 0.62, y: panelRect.minY + canvas * 0.54))
-	NSAttributedString(string: "sleep", attributes: commandAttributes).draw(at: CGPoint(x: panelRect.minX + canvas * 0.17, y: panelRect.minY + canvas * 0.33))
-	NSAttributedString(string: "30m", attributes: metricsAttributes).draw(at: CGPoint(x: panelRect.minX + canvas * 0.20, y: panelRect.minY + canvas * 0.18))
+	let moonRect = CGRect(x: canvas * 0.50, y: canvas * 0.30, width: canvas * 0.22, height: canvas * 0.28)
+	moonColor.setFill()
+	NSBezierPath(ovalIn: moonRect).fill()
 
-	let progressTrackRect = CGRect(x: panelRect.minX + canvas * 0.20, y: panelRect.minY + canvas * 0.12, width: panelRect.width * 0.58, height: canvas * 0.028)
-	let progressTrack = NSBezierPath(roundedRect: progressTrackRect, xRadius: progressTrackRect.height / 2, yRadius: progressTrackRect.height / 2)
-	rgba(52, 71, 65, 1).setFill()
-	progressTrack.fill()
+	let moonCutoutRect = moonRect.offsetBy(dx: canvas * 0.06, dy: canvas * 0.01)
+	rgba(31, 14, 18).setFill()
+	NSBezierPath(ovalIn: moonCutoutRect).fill()
 
-	let progressFillRect = CGRect(x: progressTrackRect.minX, y: progressTrackRect.minY, width: progressTrackRect.width * 0.56, height: progressTrackRect.height)
-	let progressFill = NSBezierPath(roundedRect: progressFillRect, xRadius: progressFillRect.height / 2, yRadius: progressFillRect.height / 2)
-	rgba(108, 255, 195, 1).setFill()
-	progressFill.fill()
-
-	for index in 0..<7 {
-		let y = panelRect.minY + canvas * 0.11 + CGFloat(index) * canvas * 0.055
-		let line = NSBezierPath()
-		line.move(to: CGPoint(x: panelRect.minX + canvas * 0.045, y: y))
-		line.line(to: CGPoint(x: panelRect.maxX - canvas * 0.045, y: y))
-		line.lineWidth = canvas * 0.003
-		rgba(108, 255, 195, index == 2 ? 0.09 : 0.04).setStroke()
-		line.stroke()
+	func drawStar(at center: CGPoint, radius: CGFloat) {
+		let star = NSBezierPath()
+		star.move(to: CGPoint(x: center.x, y: center.y + radius))
+		star.line(to: CGPoint(x: center.x + radius * 0.35, y: center.y + radius * 0.35))
+		star.line(to: CGPoint(x: center.x + radius, y: center.y))
+		star.line(to: CGPoint(x: center.x + radius * 0.35, y: center.y - radius * 0.35))
+		star.line(to: CGPoint(x: center.x, y: center.y - radius))
+		star.line(to: CGPoint(x: center.x - radius * 0.35, y: center.y - radius * 0.35))
+		star.line(to: CGPoint(x: center.x - radius, y: center.y))
+		star.line(to: CGPoint(x: center.x - radius * 0.35, y: center.y + radius * 0.35))
+		star.close()
+		moonColor.setFill()
+		star.fill()
 	}
+
+	drawStar(at: CGPoint(x: canvas * 0.70, y: canvas * 0.46), radius: canvas * 0.028)
+	drawStar(at: CGPoint(x: canvas * 0.77, y: canvas * 0.56), radius: canvas * 0.022)
+	drawStar(at: CGPoint(x: canvas * 0.64, y: canvas * 0.40), radius: canvas * 0.020)
+
+	let zFontLarge = NSFont.monospacedSystemFont(ofSize: canvas * 0.11, weight: .bold)
+	let zFontMedium = NSFont.monospacedSystemFont(ofSize: canvas * 0.095, weight: .bold)
+	let zFontSmall = NSFont.monospacedSystemFont(ofSize: canvas * 0.08, weight: .bold)
+	let zAttributes: [NSAttributedString.Key: Any] = [
+		.foregroundColor: highlightColor
+	]
+	NSAttributedString(string: "Z", attributes: zAttributes.merging([.font: zFontLarge]) { $1 }).draw(at: CGPoint(x: canvas * 0.69, y: canvas * 0.66))
+	NSAttributedString(string: "Z", attributes: zAttributes.merging([.font: zFontMedium]) { $1 }).draw(at: CGPoint(x: canvas * 0.79, y: canvas * 0.74))
+	NSAttributedString(string: "Z", attributes: zAttributes.merging([.font: zFontSmall]) { $1 }).draw(at: CGPoint(x: canvas * 0.86, y: canvas * 0.80))
 
 	let borderPath = NSBezierPath(roundedRect: backgroundRect, xRadius: cornerRadius, yRadius: cornerRadius)
 	borderPath.lineWidth = canvas * 0.012
-	rgba(255, 255, 255, 0.08).setStroke()
+	rgba(205, 88, 80, 0.42).setStroke()
 	borderPath.stroke()
 }
 
