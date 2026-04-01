@@ -425,111 +425,358 @@ struct ContentView: View {
 	@StateObject private var viewModel = SleepTimerViewModel()
 
 	var body: some View {
-		VStack(alignment: .leading, spacing: 20) {
-			Text("Sleep Timer")
-				.font(.system(size: 28, weight: .bold, design: .rounded))
+		ZStack {
+			LinearGradient(
+				colors: [ConsolePalette.backgroundTop, ConsolePalette.backgroundBottom],
+				startPoint: .topLeading,
+				endPoint: .bottomTrailing
+			)
+			.ignoresSafeArea()
 
-			HStack(alignment: .center, spacing: 16) {
-				VStack(alignment: .leading, spacing: 8) {
-					Text("Selected app")
-						.font(.headline)
-					HStack(spacing: 12) {
-						Text(viewModel.selectedAppName)
-							.font(.body.weight(.medium))
-						Button("Choose App") {
-							viewModel.chooseApp()
-						}
-						Button("Save as Default") {
-							viewModel.saveSelectedAppAsDefault()
-						}
-						.disabled(!viewModel.hasSelectedApp)
+			ConsoleGrid()
+				.opacity(0.14)
+				.ignoresSafeArea()
+
+			VStack(alignment: .leading, spacing: 18) {
+				HStack(alignment: .top) {
+					VStack(alignment: .leading, spacing: 6) {
+						Text("sleep-timer>")
+							.font(.system(size: 13, weight: .semibold, design: .monospaced))
+							.foregroundStyle(ConsolePalette.accent)
+
+						Text("Sleep Timer")
+							.font(.system(size: 28, weight: .bold, design: .monospaced))
+							.foregroundStyle(ConsolePalette.textPrimary)
+
+						Text("A focused timer panel for gracefully closing one selected app.")
+							.font(.system(size: 12, weight: .regular, design: .monospaced))
+							.foregroundStyle(ConsolePalette.textSecondary)
 					}
 
-					Text("Close after")
-						.font(.headline)
-					Picker("Duration mode", selection: $viewModel.durationSelectionMode) {
-						ForEach(DurationSelectionMode.allCases) { mode in
-							Text(mode.label).tag(mode)
-						}
-					}
-					.pickerStyle(.segmented)
+					Spacer(minLength: 0)
 
-					if viewModel.durationSelectionMode == .preset {
-						Picker("Close after", selection: $viewModel.selectedOption) {
-							ForEach(viewModel.options) { option in
-								Text(option.label).tag(option)
-							}
-						}
-						.labelsHidden()
-						.pickerStyle(.segmented)
-					} else {
-						HStack(alignment: .firstTextBaseline, spacing: 12) {
-							TextField(
-								"Minutes",
-								text: Binding(
-									get: { viewModel.customMinutesText },
-									set: { viewModel.applyCustomMinutesInput($0) }
-								)
-							)
-							.textFieldStyle(.roundedBorder)
-							.frame(width: 96)
-
-							Text("minutes")
-								.foregroundStyle(.secondary)
-						}
-
-						Text(viewModel.customMinutesHelpText)
-							.font(.footnote)
-							.foregroundStyle(.secondary)
-					}
+					Text(viewModel.isRunning ? "LIVE" : "IDLE")
+						.font(.system(size: 11, weight: .bold, design: .monospaced))
+						.padding(.horizontal, 10)
+						.padding(.vertical, 6)
+						.background(
+							Capsule()
+								.fill(viewModel.isRunning ? ConsolePalette.accent.opacity(0.22) : ConsolePalette.panelHighlight)
+						)
+						.overlay(
+							Capsule()
+								.stroke(viewModel.isRunning ? ConsolePalette.accent : ConsolePalette.border, lineWidth: 1)
+						)
+						.foregroundStyle(viewModel.isRunning ? ConsolePalette.accent : ConsolePalette.textSecondary)
 				}
-
-				Spacer(minLength: 0)
-
-				VStack(alignment: .trailing, spacing: 6) {
-					Text(viewModel.progressLabel)
-						.font(.title3.monospacedDigit())
-					Text(viewModel.appStatusText)
-						.font(.footnote)
-						.foregroundStyle(.secondary)
-						.multilineTextAlignment(.trailing)
-				}
-			}
-
-			ProgressView(value: viewModel.progressValue, total: viewModel.progressTotal)
-				.progressViewStyle(.linear)
-				.controlSize(.large)
-
-			Text(viewModel.statusText)
 				.frame(maxWidth: .infinity, alignment: .leading)
-				.padding(14)
-				.background(
-					RoundedRectangle(cornerRadius: 14)
-						.fill(Color(nsColor: .textBackgroundColor))
-				)
 
-			HStack(spacing: 12) {
-				Button(viewModel.primaryButtonTitle) {
-					viewModel.primaryAction()
+				LazyVGrid(
+					columns: [
+						GridItem(.flexible(minimum: 0, maximum: .infinity), spacing: 16),
+						GridItem(.flexible(minimum: 0, maximum: .infinity), spacing: 16)
+					],
+					alignment: .leading,
+					spacing: 0
+				) {
+					selectedAppPanel
+						.frame(maxWidth: .infinity)
+
+					monitorPanel
+						.frame(maxWidth: .infinity)
 				}
-				.disabled(!viewModel.hasSelectedApp && !viewModel.isRunning)
-				.keyboardShortcut(.defaultAction)
+				.frame(maxWidth: .infinity)
 
-				Button(viewModel.secondaryButtonTitle) {
-					viewModel.secondaryAction()
-				}
-
-				if let tertiaryButtonTitle = viewModel.tertiaryButtonTitle {
-					Button(tertiaryButtonTitle) {
-						viewModel.tertiaryAction()
+				consolePanel {
+					VStack(alignment: .leading, spacing: 10) {
+						consoleSectionLabel("Console output")
+						Text(viewModel.statusText)
+							.font(.system(size: 13, weight: .regular, design: .monospaced))
+							.foregroundStyle(ConsolePalette.textPrimary)
+							.frame(maxWidth: .infinity, alignment: .leading)
 					}
 				}
+				.frame(maxWidth: .infinity, alignment: .leading)
 
-				Spacer(minLength: 0)
+				HStack(spacing: 12) {
+					Button(viewModel.primaryButtonTitle) {
+						viewModel.primaryAction()
+					}
+					.buttonStyle(ConsoleButtonStyle(role: .primary))
+					.disabled(!viewModel.hasSelectedApp && !viewModel.isRunning)
+					.keyboardShortcut(.defaultAction)
+
+					Button(viewModel.secondaryButtonTitle) {
+						viewModel.secondaryAction()
+					}
+					.buttonStyle(ConsoleButtonStyle(role: .standard))
+
+					if let tertiaryButtonTitle = viewModel.tertiaryButtonTitle {
+						Button(tertiaryButtonTitle) {
+							viewModel.tertiaryAction()
+						}
+						.buttonStyle(ConsoleButtonStyle(role: .standard))
+					}
+
+					Spacer(minLength: 0)
+				}
+				.frame(maxWidth: .infinity, alignment: .leading)
+			}
+			.padding(24)
+		}
+		.frame(minWidth: 660, idealWidth: 740, maxWidth: 820, minHeight: 390)
+	}
+
+	private func consolePanel<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+		content()
+			.padding(16)
+			.frame(maxWidth: .infinity, minHeight: 236, maxHeight: 236, alignment: .topLeading)
+			.background(
+				RoundedRectangle(cornerRadius: 16)
+					.fill(ConsolePalette.panel)
+			)
+			.overlay(
+				RoundedRectangle(cornerRadius: 16)
+					.stroke(ConsolePalette.border, lineWidth: 1)
+			)
+	}
+
+	private var selectedAppPanel: some View {
+		consolePanel {
+			VStack(alignment: .leading, spacing: 14) {
+				HStack(alignment: .center, spacing: 10) {
+					consoleSectionLabel("Selected app")
+					appBadge(viewModel.selectedAppName)
+					Spacer(minLength: 0)
+				}
+
+				HStack(spacing: 10) {
+					Button("Choose App") {
+						viewModel.chooseApp()
+					}
+					.buttonStyle(ConsoleButtonStyle(role: .standard, minWidth: 124))
+					.frame(maxWidth: .infinity)
+
+					Button("Save as Default") {
+						viewModel.saveSelectedAppAsDefault()
+					}
+					.buttonStyle(ConsoleButtonStyle(role: .standard, minWidth: 124))
+					.disabled(!viewModel.hasSelectedApp)
+					.frame(maxWidth: .infinity)
+				}
+
+				Divider()
+					.overlay(ConsolePalette.border)
+
+				consoleSectionLabel("Close after")
+				Picker("Duration mode", selection: $viewModel.durationSelectionMode) {
+					ForEach(DurationSelectionMode.allCases) { mode in
+						Text(mode.label).tag(mode)
+					}
+				}
+				.font(ConsoleTypography.controlFont)
+				.pickerStyle(.segmented)
+
+				if viewModel.durationSelectionMode == .preset {
+					Picker("Close after", selection: $viewModel.selectedOption) {
+						ForEach(viewModel.options) { option in
+							Text(option.label).tag(option)
+						}
+					}
+					.labelsHidden()
+					.font(ConsoleTypography.controlFont)
+					.pickerStyle(.segmented)
+				} else {
+					HStack(alignment: .center, spacing: 12) {
+						Text("$")
+							.font(.system(size: 14, weight: .bold, design: .monospaced))
+							.foregroundStyle(ConsolePalette.accent)
+
+						TextField(
+							"Minutes",
+							text: Binding(
+								get: { viewModel.customMinutesText },
+								set: { viewModel.applyCustomMinutesInput($0) }
+							)
+						)
+							.textFieldStyle(.plain)
+							.font(.system(size: 14, weight: .medium, design: .monospaced))
+							.foregroundStyle(ConsolePalette.textPrimary)
+							.frame(width: 96)
+							.padding(.horizontal, 10)
+							.padding(.vertical, 8)
+							.background(
+								RoundedRectangle(cornerRadius: 8)
+									.fill(ConsolePalette.panelInset)
+							)
+							.overlay(
+								RoundedRectangle(cornerRadius: 8)
+									.stroke(ConsolePalette.border, lineWidth: 1)
+							)
+
+						Text("minutes")
+							.font(.system(size: 12, weight: .regular, design: .monospaced))
+							.foregroundStyle(ConsolePalette.textSecondary)
+					}
+
+					Text(viewModel.customMinutesHelpText)
+						.font(.system(size: 11, weight: .regular, design: .monospaced))
+						.foregroundStyle(ConsolePalette.textSecondary)
+				}
 			}
 		}
-		.padding(24)
-		.frame(minWidth: 640, idealWidth: 700, maxWidth: 760, minHeight: 340)
+	}
+
+	private var monitorPanel: some View {
+		consolePanel {
+			VStack(alignment: .leading, spacing: 14) {
+				consoleSectionLabel("Monitor")
+
+				Text(viewModel.progressLabel)
+					.font(.system(size: 20, weight: .semibold, design: .monospaced))
+					.foregroundStyle(ConsolePalette.textPrimary)
+
+				Text(viewModel.appStatusText)
+					.font(.system(size: 12, weight: .regular, design: .monospaced))
+					.foregroundStyle(ConsolePalette.textSecondary)
+					.lineLimit(3)
+					.fixedSize(horizontal: false, vertical: true)
+
+				VStack(alignment: .leading, spacing: 8) {
+					Text("progress")
+						.font(.system(size: 11, weight: .semibold, design: .monospaced))
+						.foregroundStyle(ConsolePalette.textSecondary)
+
+					ProgressView(value: viewModel.progressValue, total: viewModel.progressTotal)
+						.progressViewStyle(.linear)
+						.tint(ConsolePalette.accent)
+						.controlSize(.large)
+				}
+			}
+			.frame(maxWidth: .infinity, alignment: .leading)
+		}
+	}
+
+	private func consoleSectionLabel(_ text: String) -> some View {
+		Text(text.uppercased())
+			.font(.system(size: 11, weight: .bold, design: .monospaced))
+			.foregroundStyle(ConsolePalette.textSecondary)
+	}
+
+	private func appBadge(_ text: String) -> some View {
+		Text(text)
+			.font(.system(size: 11, weight: .semibold, design: .monospaced))
+			.foregroundStyle(ConsolePalette.textPrimary)
+			.lineLimit(1)
+			.padding(.horizontal, 10)
+			.padding(.vertical, 5)
+			.background(
+				Capsule()
+					.fill(ConsolePalette.panelInset)
+			)
+			.overlay(
+				Capsule()
+					.stroke(ConsolePalette.border, lineWidth: 1)
+			)
+	}
+}
+
+private enum ConsolePalette {
+	static let backgroundTop = Color(nsColor: NSColor(calibratedRed: 0.06, green: 0.08, blue: 0.07, alpha: 1))
+	static let backgroundBottom = Color(nsColor: NSColor(calibratedRed: 0.03, green: 0.04, blue: 0.04, alpha: 1))
+	static let panel = Color(nsColor: NSColor(calibratedRed: 0.10, green: 0.12, blue: 0.11, alpha: 0.94))
+	static let panelInset = Color(nsColor: NSColor(calibratedRed: 0.07, green: 0.08, blue: 0.08, alpha: 1))
+	static let panelHighlight = Color(nsColor: NSColor(calibratedRed: 0.16, green: 0.18, blue: 0.17, alpha: 0.92))
+	static let border = Color(nsColor: NSColor(calibratedRed: 0.24, green: 0.30, blue: 0.27, alpha: 1))
+	static let accent = Color(nsColor: NSColor(calibratedRed: 0.39, green: 0.92, blue: 0.63, alpha: 1))
+	static let accentPressed = Color(nsColor: NSColor(calibratedRed: 0.29, green: 0.74, blue: 0.50, alpha: 1))
+	static let textPrimary = Color(nsColor: NSColor(calibratedRed: 0.90, green: 0.96, blue: 0.92, alpha: 1))
+	static let textSecondary = Color(nsColor: NSColor(calibratedRed: 0.60, green: 0.72, blue: 0.65, alpha: 1))
+	static let disabled = Color(nsColor: NSColor(calibratedRed: 0.35, green: 0.41, blue: 0.38, alpha: 1))
+}
+
+private enum ConsoleTypography {
+	static let controlFont = Font.system(size: 12, weight: .semibold, design: .monospaced)
+}
+
+private struct ConsoleGrid: View {
+	var body: some View {
+		GeometryReader { geometry in
+			Path { path in
+				let spacing: CGFloat = 24
+
+				stride(from: CGFloat.zero, through: geometry.size.width, by: spacing).forEach { x in
+					path.move(to: CGPoint(x: x, y: 0))
+					path.addLine(to: CGPoint(x: x, y: geometry.size.height))
+				}
+
+				stride(from: CGFloat.zero, through: geometry.size.height, by: spacing).forEach { y in
+					path.move(to: CGPoint(x: 0, y: y))
+					path.addLine(to: CGPoint(x: geometry.size.width, y: y))
+				}
+			}
+			.stroke(ConsolePalette.border.opacity(0.35), lineWidth: 0.5)
+		}
+	}
+}
+
+private struct ConsoleButtonStyle: ButtonStyle {
+	enum Role {
+		case primary
+		case standard
+	}
+
+	let role: Role
+	let minWidth: CGFloat
+
+	init(role: Role, minWidth: CGFloat? = nil) {
+		self.role = role
+		self.minWidth = minWidth ?? (role == .primary ? 92 : 104)
+	}
+
+	func makeBody(configuration: Configuration) -> some View {
+		configuration.label
+			.font(ConsoleTypography.controlFont)
+			.foregroundStyle(foregroundColor(isPressed: configuration.isPressed))
+			.frame(minWidth: minWidth)
+			.padding(.horizontal, 14)
+			.padding(.vertical, 9)
+			.background(
+				RoundedRectangle(cornerRadius: 10)
+					.fill(backgroundColor(isPressed: configuration.isPressed))
+			)
+			.overlay(
+				RoundedRectangle(cornerRadius: 10)
+					.stroke(borderColor(isPressed: configuration.isPressed), lineWidth: 1)
+			)
+			.opacity(configuration.isPressed ? 0.92 : 1)
+	}
+
+	private func backgroundColor(isPressed: Bool) -> Color {
+		switch role {
+		case .primary:
+			return isPressed ? ConsolePalette.accentPressed.opacity(0.28) : ConsolePalette.accent.opacity(0.18)
+		case .standard:
+			return isPressed ? ConsolePalette.panelHighlight : ConsolePalette.panelInset
+		}
+	}
+
+	private func borderColor(isPressed: Bool) -> Color {
+		switch role {
+		case .primary:
+			return isPressed ? ConsolePalette.accentPressed : ConsolePalette.accent
+		case .standard:
+			return ConsolePalette.border
+		}
+	}
+
+	private func foregroundColor(isPressed: Bool) -> Color {
+		switch role {
+		case .primary:
+			return isPressed ? ConsolePalette.textPrimary.opacity(0.9) : ConsolePalette.accent
+		case .standard:
+			return ConsolePalette.textPrimary
+		}
 	}
 }
 
