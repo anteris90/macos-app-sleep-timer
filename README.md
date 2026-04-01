@@ -23,6 +23,8 @@ Sleep Timer is a native SwiftUI macOS app that closes a selected application aft
 - `Support/Info.plist`: app bundle metadata
 - `Support/AppIcon.icns`: bundled app icon
 - `build_app.sh`: release build and app bundle packaging script
+- `build_release_zip.sh`: release zip packaging script
+- `generate_homebrew_cask.sh`: generates the Homebrew cask for a tagged release
 
 ## Build
 
@@ -60,16 +62,16 @@ open -n "Sleep Timer.app"
 
 ## Homebrew
 
-This repository now includes a cask at `Casks/sleep-timer.rb`.
+Sleep Timer is distributed through the dedicated tap repository `anteris90/homebrew-macos-app-sleep-timer`.
 
-Install from this repository as a custom tap:
+Install from the tap:
 
 ```bash
-brew tap anteris90/macos-app-sleep-timer https://github.com/anteris90/macos-app-sleep-timer
+brew tap anteris90/macos-app-sleep-timer
 brew install --cask sleep-timer
 ```
 
-The cask downloads `SleepTimer.zip` from a tagged GitHub release. Pushing a tag like `v1.0.0` triggers the release workflow in `.github/workflows/release.yml`, and the cask should be updated to the matching version and SHA-256 for each release.
+Pushing a tag like `v1.0.0` triggers the release workflow in `.github/workflows/release.yml`, which builds `SleepTimer.zip`, publishes the GitHub release, and updates the cask in the tap repo automatically. The workflow expects a repository secret named `HOMEBREW_TAP_PAT` with permission to push to the tap repo.
 
 ## How It Works
 

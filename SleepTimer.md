@@ -53,10 +53,10 @@ SleepTimer.zip
 
 ## Homebrew support
 
-- The repository includes a cask at [Casks/sleep-timer.rb](Casks/sleep-timer.rb).
+- The published cask lives in the dedicated tap repository `anteris90/homebrew-macos-app-sleep-timer`.
 - The cask installs [Sleep Timer.app](Sleep%20Timer.app) from a tagged GitHub release asset named `SleepTimer.zip`.
-- Tagging a release like `v1.0.0` triggers [.github/workflows/release.yml](.github/workflows/release.yml), which builds and uploads that zip artifact.
-- The cask version and SHA-256 should be updated to match each tagged release artifact.
+- Tagging a release like `v1.0.0` triggers [.github/workflows/release.yml](.github/workflows/release.yml), which builds the zip, publishes the release, and updates the tap repo automatically.
+- The release workflow uses [generate_homebrew_cask.sh](generate_homebrew_cask.sh) and expects a repository secret named `HOMEBREW_TAP_PAT` with push access to the tap repo.
 
 ## Project layout
 
@@ -64,6 +64,6 @@ SleepTimer.zip
 - [Sources/SleepTimer/main.swift](Sources/SleepTimer/main.swift): SwiftUI app, timer logic, app selection, and shutdown behavior.
 - [build_app.sh](build_app.sh): Builds the release binary and wraps it in a macOS app bundle.
 - [build_release_zip.sh](build_release_zip.sh): Builds the app bundle and packages it as `SleepTimer.zip` for GitHub releases and Homebrew.
+- [generate_homebrew_cask.sh](generate_homebrew_cask.sh): Generates the versioned Homebrew cask file used by the tap repository.
 - [Support/Info.plist](Support/Info.plist): Bundle metadata used for the packaged app.
 - [.github/copilot-instructions.md](.github/copilot-instructions.md): Workspace instructions for future agent-assisted changes.
-- [Casks/sleep-timer.rb](Casks/sleep-timer.rb): Homebrew cask definition for installing the packaged app.

@@ -24,7 +24,43 @@ jobs:
       - name: Build release archive
         run: ./build_release_zip.sh
 
+      - name: Compute release metadata
+        id: release_metadata
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          SHA256="$(shasum -a 256 SleepTimer.zip | awk '{print $1}')"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "sha256=$SHA256" >> "$GITHUB_OUTPUT"
+
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2
         with:
           files: SleepTimer.zip
+
+      - name: Clone Homebrew tap
+        env:
+          HOMEBREW_TAP_PAT: ${{ secrets.HOMEBREW_TAP_PAT }}
+        run: |
+          git clone "https://x-access-token:${HOMEBREW_TAP_PAT}@github.com/anteris90/homebrew-macos-app-sleep-timer.git" "$RUNNER_TEMP/homebrew-macos-app-sleep-timer"
+
+      - name: Update Homebrew cask
+        env:
+          VERSION: ${{ steps.release_metadata.outputs.version }}
+          SHA256: ${{ steps.release_metadata.outputs.sha256 }}
+        run: |
+          ./generate_homebrew_cask.sh "$VERSION" "$SHA256" "$RUNNER_TEMP/homebrew-macos-app-sleep-timer/Casks/sleep-timer.rb"
+
+      - name: Publish Homebrew tap update
+        env:
+          VERSION: ${{ steps.release_metadata.outputs.version }}
+        run: |
+          cd "$RUNNER_TEMP/homebrew-macos-app-sleep-timer"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Casks/sleep-timer.rb
+          if git diff --cached --quiet; then
+            echo "Homebrew tap is already up to date."
+            exit 0
+          fi
+          git commit -m "Update sleep-timer cask to v${VERSION}"
+          git push origin main
