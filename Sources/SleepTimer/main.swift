@@ -52,6 +52,24 @@ enum DurationSelectionMode: String, CaseIterable, Identifiable {
 	}
 }
 
+enum ConsoleThemeOption: String, CaseIterable, Identifiable {
+	static let defaultsKey = "selectedTheme"
+
+	case green
+	case red
+
+	var id: String { rawValue }
+
+	var label: String {
+		switch self {
+		case .green:
+			return "Green"
+		case .red:
+			return "Red"
+		}
+	}
+}
+
 @MainActor
 final class SleepTimerViewModel: ObservableObject {
 	private enum DefaultsKey {
@@ -423,6 +441,7 @@ final class SleepTimerViewModel: ObservableObject {
 
 struct ContentView: View {
 	@StateObject private var viewModel = SleepTimerViewModel()
+	@AppStorage(ConsoleThemeOption.defaultsKey) private var selectedThemeRawValue = ConsoleThemeOption.green.rawValue
 
 	var body: some View {
 		ZStack {
@@ -471,14 +490,7 @@ struct ContentView: View {
 				}
 				.frame(maxWidth: .infinity, alignment: .leading)
 
-				LazyVGrid(
-					columns: [
-						GridItem(.flexible(minimum: 0, maximum: .infinity), spacing: 16),
-						GridItem(.flexible(minimum: 0, maximum: .infinity), spacing: 16)
-					],
-					alignment: .leading,
-					spacing: 0
-				) {
+				VStack(alignment: .leading, spacing: 16) {
 					selectedAppPanel
 						.frame(maxWidth: .infinity)
 
@@ -524,13 +536,14 @@ struct ContentView: View {
 			}
 			.padding(24)
 		}
-		.frame(minWidth: 660, idealWidth: 740, maxWidth: 820, minHeight: 390)
+		.id(selectedThemeRawValue)
+		.frame(width: 820, height: 720)
 	}
 
 	private func consolePanel<Content: View>(@ViewBuilder content: () -> Content) -> some View {
 		content()
 			.padding(16)
-			.frame(maxWidth: .infinity, minHeight: 236, maxHeight: 236, alignment: .topLeading)
+			.frame(maxWidth: .infinity, alignment: .topLeading)
 			.background(
 				RoundedRectangle(cornerRadius: 16)
 					.fill(ConsolePalette.panel)
@@ -550,48 +563,43 @@ struct ContentView: View {
 					Spacer(minLength: 0)
 				}
 
-				HStack(spacing: 10) {
+				consoleSegmentedControl {
 					Button("Choose App") {
 						viewModel.chooseApp()
 					}
-					.buttonStyle(ConsoleButtonStyle(role: .standard, minWidth: 124))
-					.frame(maxWidth: .infinity)
+					.buttonStyle(ConsoleSegmentButtonStyle(isSelected: false, size: .regular))
 
 					Button("Save as Default") {
 						viewModel.saveSelectedAppAsDefault()
 					}
-					.buttonStyle(ConsoleButtonStyle(role: .standard, minWidth: 124))
+					.buttonStyle(ConsoleSegmentButtonStyle(isSelected: false, size: .regular))
 					.disabled(!viewModel.hasSelectedApp)
-					.frame(maxWidth: .infinity)
 				}
 
 				Divider()
 					.overlay(ConsolePalette.border)
 
 				consoleSectionLabel("Close after")
-				Picker("Duration mode", selection: $viewModel.durationSelectionMode) {
+				consoleSegmentedControl {
 					ForEach(DurationSelectionMode.allCases) { mode in
-						Text(mode.label).tag(mode)
+						Button(mode.label) {
+							viewModel.durationSelectionMode = mode
+						}
+						.buttonStyle(ConsoleSegmentButtonStyle(isSelected: viewModel.durationSelectionMode == mode, size: .regular))
 					}
 				}
-				.font(ConsoleTypography.controlFont)
-				.pickerStyle(.segmented)
 
 				if viewModel.durationSelectionMode == .preset {
-					Picker("Close after", selection: $viewModel.selectedOption) {
+					consoleSegmentedControl(size: .regular) {
 						ForEach(viewModel.options) { option in
-							Text(option.label).tag(option)
+							Button(option.label) {
+								viewModel.selectedOption = option
+							}
+							.buttonStyle(ConsoleSegmentButtonStyle(isSelected: viewModel.selectedOption == option, size: .regular))
 						}
 					}
-					.labelsHidden()
-					.font(ConsoleTypography.controlFont)
-					.pickerStyle(.segmented)
 				} else {
 					HStack(alignment: .center, spacing: 12) {
-						Text("$")
-							.font(.system(size: 14, weight: .bold, design: .monospaced))
-							.foregroundStyle(ConsolePalette.accent)
-
 						TextField(
 							"Minutes",
 							text: Binding(
@@ -625,6 +633,7 @@ struct ContentView: View {
 				}
 			}
 		}
+		.frame(minHeight: 272, maxHeight: 272, alignment: .topLeading)
 	}
 
 	private var monitorPanel: some View {
@@ -655,6 +664,7 @@ struct ContentView: View {
 			}
 			.frame(maxWidth: .infinity, alignment: .leading)
 		}
+		.frame(minHeight: 180, maxHeight: 180, alignment: .topLeading)
 	}
 
 	private func consoleSectionLabel(_ text: String) -> some View {
@@ -679,20 +689,123 @@ struct ContentView: View {
 					.stroke(ConsolePalette.border, lineWidth: 1)
 			)
 	}
+
+	private func consoleSegmentedControl<Content: View>(size: ConsoleSegmentButtonStyle.Size = .regular, @ViewBuilder content: () -> Content) -> some View {
+		HStack(spacing: 0) {
+			content()
+		}
+		.padding(size == .regular ? 4 : 3)
+		.background(
+			RoundedRectangle(cornerRadius: size == .regular ? 11 : 10)
+				.fill(ConsolePalette.panelInset)
+		)
+		.overlay(
+			RoundedRectangle(cornerRadius: size == .regular ? 11 : 10)
+				.stroke(ConsolePalette.border, lineWidth: 1)
+		)
+	}
 }
 
 private enum ConsolePalette {
-	static let backgroundTop = Color(nsColor: NSColor(calibratedRed: 0.06, green: 0.08, blue: 0.07, alpha: 1))
-	static let backgroundBottom = Color(nsColor: NSColor(calibratedRed: 0.03, green: 0.04, blue: 0.04, alpha: 1))
-	static let panel = Color(nsColor: NSColor(calibratedRed: 0.10, green: 0.12, blue: 0.11, alpha: 0.94))
-	static let panelInset = Color(nsColor: NSColor(calibratedRed: 0.07, green: 0.08, blue: 0.08, alpha: 1))
-	static let panelHighlight = Color(nsColor: NSColor(calibratedRed: 0.16, green: 0.18, blue: 0.17, alpha: 0.92))
-	static let border = Color(nsColor: NSColor(calibratedRed: 0.24, green: 0.30, blue: 0.27, alpha: 1))
-	static let accent = Color(nsColor: NSColor(calibratedRed: 0.39, green: 0.92, blue: 0.63, alpha: 1))
-	static let accentPressed = Color(nsColor: NSColor(calibratedRed: 0.29, green: 0.74, blue: 0.50, alpha: 1))
-	static let textPrimary = Color(nsColor: NSColor(calibratedRed: 0.90, green: 0.96, blue: 0.92, alpha: 1))
-	static let textSecondary = Color(nsColor: NSColor(calibratedRed: 0.60, green: 0.72, blue: 0.65, alpha: 1))
-	static let disabled = Color(nsColor: NSColor(calibratedRed: 0.35, green: 0.41, blue: 0.38, alpha: 1))
+	private static var theme: ConsoleThemeOption {
+		ConsoleThemeOption(
+			rawValue: UserDefaults.standard.string(forKey: ConsoleThemeOption.defaultsKey) ?? ConsoleThemeOption.green.rawValue
+		) ?? .green
+	}
+
+	static var backgroundTop: Color {
+		switch theme {
+		case .green:
+			return Color(nsColor: NSColor(calibratedRed: 0.06, green: 0.08, blue: 0.07, alpha: 1))
+		case .red:
+			return Color(nsColor: NSColor(calibratedRed: 0.09, green: 0.06, blue: 0.06, alpha: 1))
+		}
+	}
+
+	static var backgroundBottom: Color {
+		switch theme {
+		case .green:
+			return Color(nsColor: NSColor(calibratedRed: 0.03, green: 0.04, blue: 0.04, alpha: 1))
+		case .red:
+			return Color(nsColor: NSColor(calibratedRed: 0.04, green: 0.03, blue: 0.03, alpha: 1))
+		}
+	}
+
+	static var panel: Color {
+		switch theme {
+		case .green:
+			return Color(nsColor: NSColor(calibratedRed: 0.10, green: 0.12, blue: 0.11, alpha: 0.94))
+		case .red:
+			return Color(nsColor: NSColor(calibratedRed: 0.13, green: 0.11, blue: 0.11, alpha: 0.94))
+		}
+	}
+
+	static var panelInset: Color {
+		switch theme {
+		case .green:
+			return Color(nsColor: NSColor(calibratedRed: 0.07, green: 0.08, blue: 0.08, alpha: 1))
+		case .red:
+			return Color(nsColor: NSColor(calibratedRed: 0.09, green: 0.07, blue: 0.07, alpha: 1))
+		}
+	}
+
+	static var panelHighlight: Color {
+		switch theme {
+		case .green:
+			return Color(nsColor: NSColor(calibratedRed: 0.16, green: 0.18, blue: 0.17, alpha: 0.92))
+		case .red:
+			return Color(nsColor: NSColor(calibratedRed: 0.20, green: 0.15, blue: 0.15, alpha: 0.92))
+		}
+	}
+
+	static var border: Color {
+		switch theme {
+		case .green:
+			return Color(nsColor: NSColor(calibratedRed: 0.24, green: 0.30, blue: 0.27, alpha: 1))
+		case .red:
+			return Color(nsColor: NSColor(calibratedRed: 0.36, green: 0.24, blue: 0.24, alpha: 1))
+		}
+	}
+
+	static var accent: Color {
+		switch theme {
+		case .green:
+			return Color(nsColor: NSColor(calibratedRed: 0.39, green: 0.92, blue: 0.63, alpha: 1))
+		case .red:
+			return Color(nsColor: NSColor(calibratedRed: 0.95, green: 0.42, blue: 0.42, alpha: 1))
+		}
+	}
+
+	static var accentPressed: Color {
+		switch theme {
+		case .green:
+			return Color(nsColor: NSColor(calibratedRed: 0.29, green: 0.74, blue: 0.50, alpha: 1))
+		case .red:
+			return Color(nsColor: NSColor(calibratedRed: 0.78, green: 0.31, blue: 0.31, alpha: 1))
+		}
+	}
+
+	static var textPrimary: Color {
+		Color(nsColor: NSColor(calibratedRed: 0.90, green: 0.96, blue: 0.92, alpha: 1))
+	}
+
+	static var textSecondary: Color {
+		switch theme {
+		case .green:
+			return Color(nsColor: NSColor(calibratedRed: 0.60, green: 0.72, blue: 0.65, alpha: 1))
+		case .red:
+			return Color(nsColor: NSColor(calibratedRed: 0.74, green: 0.64, blue: 0.64, alpha: 1))
+		}
+	}
+
+	static var disabled: Color {
+		switch theme {
+		case .green:
+			return Color(nsColor: NSColor(calibratedRed: 0.35, green: 0.41, blue: 0.38, alpha: 1))
+		case .red:
+			return Color(nsColor: NSColor(calibratedRed: 0.44, green: 0.35, blue: 0.35, alpha: 1))
+		}
+	}
 }
 
 private enum ConsoleTypography {
@@ -780,12 +893,121 @@ private struct ConsoleButtonStyle: ButtonStyle {
 	}
 }
 
+private struct ConsoleSegmentButtonStyle: ButtonStyle {
+	enum Size {
+		case regular
+		case compact
+	}
+
+	let isSelected: Bool
+	let size: Size
+
+	func makeBody(configuration: Configuration) -> some View {
+		configuration.label
+			.font(font)
+			.foregroundStyle(foregroundColor(isPressed: configuration.isPressed))
+			.lineLimit(1)
+			.minimumScaleFactor(minimumScaleFactor)
+			.allowsTightening(allowsTightening)
+			.frame(maxWidth: .infinity)
+			.padding(.horizontal, horizontalPadding)
+			.padding(.vertical, verticalPadding)
+			.background(
+				RoundedRectangle(cornerRadius: cornerRadius)
+					.fill(backgroundColor(isPressed: configuration.isPressed))
+			)
+			.contentShape(RoundedRectangle(cornerRadius: cornerRadius))
+	}
+
+	private var font: Font {
+		switch size {
+		case .regular:
+			return ConsoleTypography.controlFont
+		case .compact:
+			return .system(size: 11, weight: .semibold, design: .monospaced)
+		}
+	}
+
+	private var horizontalPadding: CGFloat {
+		switch size {
+		case .regular:
+			return 14
+		case .compact:
+			return 5
+		}
+	}
+
+	private var minimumScaleFactor: CGFloat {
+		switch size {
+		case .regular:
+			return 1
+		case .compact:
+			return 0.75
+		}
+	}
+
+	private var allowsTightening: Bool {
+		switch size {
+		case .regular:
+			return false
+		case .compact:
+			return true
+		}
+	}
+
+	private var verticalPadding: CGFloat {
+		switch size {
+		case .regular:
+			return 10
+		case .compact:
+			return 6
+		}
+	}
+
+	private var cornerRadius: CGFloat {
+		switch size {
+		case .regular:
+			return 8
+		case .compact:
+			return 7
+		}
+	}
+
+	private func backgroundColor(isPressed: Bool) -> Color {
+		if isSelected {
+			return isPressed ? ConsolePalette.accentPressed.opacity(0.35) : ConsolePalette.accent.opacity(0.22)
+		}
+
+		return isPressed ? ConsolePalette.panelHighlight : .clear
+	}
+
+	private func foregroundColor(isPressed: Bool) -> Color {
+		if isSelected {
+			return isPressed ? ConsolePalette.textPrimary.opacity(0.9) : ConsolePalette.accent
+		}
+
+		return isPressed ? ConsolePalette.textPrimary : ConsolePalette.textSecondary
+	}
+}
+
+
 @main
 struct SleepTimerApp: App {
+	@AppStorage(ConsoleThemeOption.defaultsKey) private var selectedThemeRawValue = ConsoleThemeOption.green.rawValue
+
 	var body: some Scene {
 		WindowGroup {
 			ContentView()
 		}
 		.windowResizability(.contentSize)
+		.commands {
+			CommandMenu("Theme") {
+				Picker("Theme", selection: $selectedThemeRawValue) {
+					ForEach(ConsoleThemeOption.allCases) { theme in
+						Text(theme.label).tag(theme.rawValue)
+					}
+				}
+			}
+		}
 	}
 }

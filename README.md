@@ -9,6 +9,7 @@ Sleep Timer is a native SwiftUI macOS app that closes a selected application aft
 - Pick a preset delay of 15, 30, 45, 60, or 90 minutes, or enter a custom duration from 1 to 720 minutes.
 - Start, cancel, restart, or immediately trigger the shutdown flow.
 - Present the controls in a restrained console-inspired interface.
+- Switch between green and red console themes from the macOS menu bar.
 - Show a 10-second warning phase before the selected app is closed.
 - Close the target app gracefully through AppKit if it is running.
 
