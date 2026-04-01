@@ -39,7 +39,7 @@ jobs:
 
       - name: Clone Homebrew tap
         env:
-          HOMEBREW_TAP_PAT: ${{ secrets.HOMEBREW_TAP_PAT }}
+          HOMEBREW_TAP_PAT: ${{ secrets['HOMEBREW_TAP_PAT'] }}
         run: |
           git clone "https://x-access-token:${HOMEBREW_TAP_PAT}@github.com/anteris90/homebrew-macos-app-sleep-timer.git" "$RUNNER_TEMP/homebrew-macos-app-sleep-timer"
 
