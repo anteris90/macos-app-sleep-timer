@@ -53,10 +53,11 @@ SleepTimer.zip
 
 ## Homebrew support
 
-- The published cask lives in the dedicated tap repository `anteris90/homebrew-macos-app-sleep-timer`.
+- The published cask lives in the dedicated private tap repository `anteris90/homebrew-macos-app-sleep-timer`.
 - The cask installs [Sleep Timer.app](Sleep%20Timer.app) from a tagged GitHub release asset named `SleepTimer.zip`.
 - Tagging a release like `v1.0.0` triggers [.github/workflows/release.yml](.github/workflows/release.yml), which builds the zip, publishes the release, and updates the tap repo automatically.
 - The release workflow uses [generate_homebrew_cask.sh](generate_homebrew_cask.sh) and expects a repository secret named `HOMEBREW_TAP_PAT` with push access to the tap repo.
+- Because the tap repo is private, installs require GitHub access to that repository and should use the explicit repository URL when tapping.
 
 ## Project layout
 

@@ -62,16 +62,16 @@ open -n "Sleep Timer.app"
 
 ## Homebrew
 
-Sleep Timer is distributed through the dedicated tap repository `anteris90/homebrew-macos-app-sleep-timer`.
+Sleep Timer is distributed through the dedicated private tap repository `anteris90/homebrew-macos-app-sleep-timer`.
 
-Install from the tap:
+Install from the tap with GitHub access to that private repository:
 
 ```bash
-brew tap anteris90/macos-app-sleep-timer
+brew tap anteris90/macos-app-sleep-timer https://github.com/anteris90/homebrew-macos-app-sleep-timer
 brew install --cask sleep-timer
 ```
 
-Pushing a tag like `v1.0.0` triggers the release workflow in `.github/workflows/release.yml`, which builds `SleepTimer.zip`, publishes the GitHub release, and updates the cask in the tap repo automatically. The workflow expects a repository secret named `HOMEBREW_TAP_PAT` with permission to push to the tap repo.
+Pushing a tag like `v1.0.0` triggers the release workflow in `.github/workflows/release.yml`, which builds `SleepTimer.zip`, publishes the GitHub release, and updates the cask in the tap repo automatically. The workflow expects a repository secret named `HOMEBREW_TAP_PAT` with permission to push to the tap repo. Because the tap is private, anonymous public `brew tap` installs are no longer available.
 
 ## How It Works
 
