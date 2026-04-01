@@ -2,19 +2,19 @@
 import PackageDescription
 
 let package = Package(
-	name: "SafariSleepTimer",
+	name: "MacOSAppSleepTimer",
 	platforms: [
 		.macOS(.v13)
 	],
 	products: [
 		.executable(
-			name: "SafariSleepTimer",
-			targets: ["SafariSleepTimer"]
+			name: "MacOSAppSleepTimer",
+			targets: ["MacOSAppSleepTimer"]
 		)
 	],
 	targets: [
 		.executableTarget(
-			name: "SafariSleepTimer"
+			name: "MacOSAppSleepTimer"
 		)
 	]
 )

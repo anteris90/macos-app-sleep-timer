@@ -1,14 +1,16 @@
-# Safari Sleep Timer
+# macOS App Sleep Timer
 
-Safari Sleep Timer is now a native SwiftUI macOS app. The old AppleScript source remains in the repository as a legacy reference, but the current app entrypoint is the Swift target in [Sources/SafariSleepTimer/main.swift](Sources/SafariSleepTimer/main.swift).
+macOS App Sleep Timer is a native SwiftUI macOS app. The old AppleScript source remains in the repository as a legacy reference, but the current app entrypoint is the Swift target in [Sources/MacOSAppSleepTimer/main.swift](Sources/MacOSAppSleepTimer/main.swift).
 
 ## Current behavior
 
+- Choose any installed macOS app to close when the timer expires.
+- Save the selected app as the default choice for future launches.
 - Select a delay of 15, 30, 45, 60, or 90 minutes.
 - Start, cancel, or restart the timer from the same window.
-- View a live countdown and current Safari status.
-- Enter a 10-second warning phase before Safari is closed.
-- Close Safari gracefully through AppKit if it is running.
+- View a live countdown and current selected-app status.
+- Enter a 10-second warning phase before the selected app is closed.
+- Close the selected app gracefully through AppKit if it is running.
 
 ## Build
 
@@ -27,16 +29,16 @@ Bundle the app:
 The packaged app is created at:
 
 ```bash
-SafariSleepTimer.app
+macOS App Sleep Timer.app
 ```
 
 ## Project layout
 
 - [Package.swift](Package.swift): Swift package definition.
-- [Sources/SafariSleepTimer/main.swift](Sources/SafariSleepTimer/main.swift): SwiftUI app, timer logic, and Safari shutdown behavior.
+- [Sources/MacOSAppSleepTimer/main.swift](Sources/MacOSAppSleepTimer/main.swift): SwiftUI app, timer logic, app selection, and shutdown behavior.
 - [build_app.sh](build_app.sh): Builds the release binary and wraps it in a macOS app bundle.
 - [Support/Info.plist](Support/Info.plist): Bundle metadata used for the packaged app.
 
 ## Legacy AppleScript
 
-[SafariSleepTimer.applescript](SafariSleepTimer.applescript) and the checked-in [SafariSleepTimer.app](SafariSleepTimer.app) reflect the earlier AppleScript implementation and are no longer the primary source for the current app behavior.
+[SafariSleepTimer.applescript](SafariSleepTimer.applescript) and the earlier checked-in Safari app bundle reflect the original AppleScript implementation and are no longer the primary source for the current app behavior.
