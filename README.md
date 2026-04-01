@@ -69,7 +69,7 @@ brew tap anteris90/macos-app-sleep-timer https://github.com/anteris90/macos-app-
 brew install --cask sleep-timer
 ```
 
-The cask downloads `SleepTimer.zip` from the latest GitHub release, so tagged releases should include that asset. Pushing a tag like `v1.0.0` triggers the release workflow in `.github/workflows/release.yml`.
+The cask downloads `SleepTimer.zip` from a tagged GitHub release. Pushing a tag like `v1.0.0` triggers the release workflow in `.github/workflows/release.yml`, and the cask should be updated to the matching version and SHA-256 for each release.
 
 ## How It Works
 

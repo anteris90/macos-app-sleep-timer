@@ -54,8 +54,9 @@ SleepTimer.zip
 ## Homebrew support
 
 - The repository includes a cask at [Casks/sleep-timer.rb](Casks/sleep-timer.rb).
-- The cask installs [Sleep Timer.app](Sleep%20Timer.app) from the latest GitHub release asset named `SleepTimer.zip`.
+- The cask installs [Sleep Timer.app](Sleep%20Timer.app) from a tagged GitHub release asset named `SleepTimer.zip`.
 - Tagging a release like `v1.0.0` triggers [.github/workflows/release.yml](.github/workflows/release.yml), which builds and uploads that zip artifact.
+- The cask version and SHA-256 should be updated to match each tagged release artifact.
 
 ## Project layout
 
