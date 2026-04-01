@@ -5,17 +5,17 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleExecutable</key>
-	<string>MacOSAppSleepTimer</string>
+	<string>SleepTimer</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.tomi.MacOSAppSleepTimer</string>
+	<string>com.tomi.SleepTimer</string>
 	<key>CFBundleDisplayName</key>
-	<string>macOS App Sleep Timer</string>
+	<string>Sleep Timer</string>
 	<key>CFBundleIconFile</key>
 	<string>AppIcon</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>macOS App Sleep Timer</string>
+	<string>Sleep Timer</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

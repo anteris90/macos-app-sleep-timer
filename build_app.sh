@@ -3,8 +3,8 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
-APP_NAME="macOS App Sleep Timer.app"
-EXECUTABLE_NAME="MacOSAppSleepTimer"
+APP_NAME="Sleep Timer.app"
+EXECUTABLE_NAME="SleepTimer"
 BUILD_DIR="$ROOT_DIR/.build/release"
 APP_DIR="$ROOT_DIR/$APP_NAME"
 
@@ -12,6 +12,7 @@ cd "$ROOT_DIR"
 swift build -c release
 
 rm -rf "$ROOT_DIR/SafariSleepTimer.app"
+rm -rf "$ROOT_DIR/macOS App Sleep Timer.app"
 rm -rf "$APP_DIR"
 mkdir -p "$APP_DIR/Contents/MacOS" "$APP_DIR/Contents/Resources"
 

@@ -36,6 +36,22 @@ enum TimerPhase {
 	case warning
 }
 
+enum DurationSelectionMode: String, CaseIterable, Identifiable {
+	case preset
+	case custom
+
+	var id: String { rawValue }
+
+	var label: String {
+		switch self {
+		case .preset:
+			return "Presets"
+		case .custom:
+			return "Custom"
+		}
+	}
+}
+
 @MainActor
 final class SleepTimerViewModel: ObservableObject {
 	private enum DefaultsKey {
@@ -44,8 +60,12 @@ final class SleepTimerViewModel: ObservableObject {
 
 	let options = [15, 30, 45, 60, 90].map(DelayOption.init)
 	private let defaultOption = DelayOption(minutes: 30)
+	private let minimumCustomMinutes = 1
+	private let maximumCustomMinutes = 720
 
 	@Published var selectedOption: DelayOption
+	@Published var durationSelectionMode: DurationSelectionMode = .preset
+	@Published var customMinutesText: String = ""
 	@Published var selectedApp: TargetApplication?
 	@Published var phase: TimerPhase = .idle
 	@Published var activeDuration: Int = 0
@@ -147,6 +167,10 @@ final class SleepTimerViewModel: ObservableObject {
 		}
 	}
 
+	var customMinutesHelpText: String {
+		"Enter \(minimumCustomMinutes)-\(maximumCustomMinutes) minutes."
+	}
+
 	func primaryAction() {
 		guard phase == .warning || hasSelectedApp else {
 			statusText = "Choose an app first."
@@ -155,9 +179,9 @@ final class SleepTimerViewModel: ObservableObject {
 
 		switch phase {
 		case .idle:
-			startTimer(using: selectedOption)
+			startTimerForCurrentSelection()
 		case .running:
-			startTimer(using: selectedOption)
+			startTimerForCurrentSelection()
 		case .warning:
 			closeSelectedAppNow(triggeredAutomatically: false)
 		}
@@ -170,7 +194,7 @@ final class SleepTimerViewModel: ObservableObject {
 		case .running:
 			cancelTimer(reason: "Timer cancelled.")
 		case .warning:
-			startTimer(using: selectedOption)
+			startTimerForCurrentSelection()
 		}
 	}
 
@@ -212,6 +236,19 @@ final class SleepTimerViewModel: ObservableObject {
 		}
 	}
 
+	func sanitizedCustomMinutes(_ value: String) -> String {
+		String(value.filter(\.isNumber).prefix(3))
+	}
+
+	func applyCustomMinutesInput(_ value: String) {
+		customMinutesText = sanitizedCustomMinutes(value)
+	}
+
+	func startTimerForCurrentSelection() {
+		guard let option = selectedDelayOption() else { return }
+		startTimer(using: option)
+	}
+
 	func startTimer(using option: DelayOption) {
 		guard let selectedApp else {
 			statusText = "Choose an app first."
@@ -231,17 +268,41 @@ final class SleepTimerViewModel: ObservableObject {
 	func cancelTimer(reason: String) {
 		stopTimer()
 		phase = .idle
-		remainingSeconds = selectedOption.seconds
+		remainingSeconds = (resolvedDelayOption(fallbackToDefault: true) ?? defaultOption).seconds
 		warningSecondsRemaining = 10
 		statusText = reason
 		appStatusText = Self.statusText(for: selectedApp)
 	}
 
 	func resetSelection() {
-		selectedOption = DelayOption(minutes: 30)
+		durationSelectionMode = .preset
+		selectedOption = defaultOption
+		customMinutesText = ""
 		remainingSeconds = selectedOption.seconds
 		statusText = "Timer reset to the default 30 minutes."
 		appStatusText = Self.statusText(for: selectedApp)
+	}
+
+	private func selectedDelayOption() -> DelayOption? {
+		guard let option = resolvedDelayOption(fallbackToDefault: false) else {
+			statusText = "Enter a custom duration between \(minimumCustomMinutes) and \(maximumCustomMinutes) minutes."
+			return nil
+		}
+
+		return option
+	}
+
+	private func resolvedDelayOption(fallbackToDefault: Bool) -> DelayOption? {
+		switch durationSelectionMode {
+		case .preset:
+			return selectedOption
+		case .custom:
+			guard let customMinutes = Int(customMinutesText),
+				(minimumCustomMinutes...maximumCustomMinutes).contains(customMinutes) else {
+				return fallbackToDefault ? defaultOption : nil
+			}
+			return DelayOption(minutes: customMinutes)
+		}
 	}
 
 	private func startTicking() {
@@ -282,7 +343,7 @@ final class SleepTimerViewModel: ObservableObject {
 		let appName = selectedAppName
 		let didCloseSelectedApp = quitSelectedAppIfRunning()
 		phase = .idle
-		remainingSeconds = selectedOption.seconds
+		remainingSeconds = (resolvedDelayOption(fallbackToDefault: true) ?? defaultOption).seconds
 		warningSecondsRemaining = 10
 		if didCloseSelectedApp {
 			statusText = triggeredAutomatically ? "\(appName) closed automatically." : "\(appName) closed."
@@ -365,7 +426,7 @@ struct ContentView: View {
 
 	var body: some View {
 		VStack(alignment: .leading, spacing: 20) {
-			Text("macOS App Sleep Timer")
+			Text("Sleep Timer")
 				.font(.system(size: 28, weight: .bold, design: .rounded))
 
 			HStack(alignment: .center, spacing: 16) {
@@ -386,13 +447,41 @@ struct ContentView: View {
 
 					Text("Close after")
 						.font(.headline)
-					Picker("Close after", selection: $viewModel.selectedOption) {
-						ForEach(viewModel.options) { option in
-							Text(option.label).tag(option)
+					Picker("Duration mode", selection: $viewModel.durationSelectionMode) {
+						ForEach(DurationSelectionMode.allCases) { mode in
+							Text(mode.label).tag(mode)
 						}
 					}
-					.labelsHidden()
 					.pickerStyle(.segmented)
+
+					if viewModel.durationSelectionMode == .preset {
+						Picker("Close after", selection: $viewModel.selectedOption) {
+							ForEach(viewModel.options) { option in
+								Text(option.label).tag(option)
+							}
+						}
+						.labelsHidden()
+						.pickerStyle(.segmented)
+					} else {
+						HStack(alignment: .firstTextBaseline, spacing: 12) {
+							TextField(
+								"Minutes",
+								text: Binding(
+									get: { viewModel.customMinutesText },
+									set: { viewModel.applyCustomMinutesInput($0) }
+								)
+							)
+							.textFieldStyle(.roundedBorder)
+							.frame(width: 96)
+
+							Text("minutes")
+								.foregroundStyle(.secondary)
+						}
+
+						Text(viewModel.customMinutesHelpText)
+							.font(.footnote)
+							.foregroundStyle(.secondary)
+					}
 				}
 
 				Spacer(minLength: 0)
@@ -440,12 +529,12 @@ struct ContentView: View {
 			}
 		}
 		.padding(24)
-		.frame(minWidth: 640, idealWidth: 700, maxWidth: 760, minHeight: 300)
+		.frame(minWidth: 640, idealWidth: 700, maxWidth: 760, minHeight: 340)
 	}
 }
 
 @main
-struct MacOSAppSleepTimerApp: App {
+struct SleepTimerApp: App {
 	var body: some Scene {
 		WindowGroup {
 			ContentView()
