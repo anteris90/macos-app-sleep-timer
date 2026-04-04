@@ -2,6 +2,10 @@
 
 Sleep Timer is a native SwiftUI macOS app that closes a selected application after a configurable delay.
 
+## Screenshot
+
+![Sleep Timer interface](docs/images/sleep-timer-ui.svg)
+
 ## Features
 
 - Choose any installed macOS app to target.

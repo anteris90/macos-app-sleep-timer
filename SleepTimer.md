@@ -2,6 +2,10 @@
 
 Sleep Timer is a native SwiftUI macOS app. The current app entrypoint is the Swift target in [Sources/SleepTimer/main.swift](Sources/SleepTimer/main.swift).
 
+## Screenshot
+
+![Sleep Timer interface](docs/images/sleep-timer-ui.svg)
+
 ## Project notes
 
 - The shipped app name is `Sleep Timer`.
